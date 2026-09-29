@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER BREAKOUT 2026 | George College</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-color: #030712;
+            --panel-bg: rgba(10, 15, 30, 0.85);
+            --neon-cyan: #00f0ff;
+            --neon-pink: #ff007f;
+            --neon-green: #00ff66;
+            --neon-yellow: #f3e600;
+            --text-main: #c0d8d8;
+            --border-glow: 0 0 15px rgba(0, 240, 255, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Share Tech Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* CRT Scanline Overlay */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 999;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Confetti / Cheer Canvas Layer */
+        #celebration-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Ambient Background Grid */
+        .cyber-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 20px 15px;
+            border-bottom: 1px dashed rgba(0, 240, 255, 0.3);
+            background: rgba(3, 7, 18, 0.9);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.8);
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--neon-pink);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 0 20px;
+            width: 100%;
+            flex: 1;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            display: none;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-container.active {
+            display: flex;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+
+        .step-indicator {
+            position: relative;
+            z-index: 2;
+            background: var(--bg-color);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            color: #777;
+            transition: all 0.3s ease;
+        }
+
+        .step-indicator.active {
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .step-indicator.completed {
+            background: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        /* Terminal Card Box */
+        .terminal-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 6px;
+            padding: 30px;
+            box-shadow: var(--border-glow);
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .terminal-box::before {
+            content: 'TERMINAL_SECURE_NODE_03';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: var(--bg-color);
+            padding: 0 10px;
+            font-size: 0.75rem;
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+        }
+
+        .stage {
+            display: none;
+        }
+
+        .stage.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #fff;
+            margin-bottom: 15px;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 span {
+            color: var(--neon-yellow);
+        }
+
+        p.instruction {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-size: 1.05rem;
+        }
+
+        /* Intro Landing Screen */
+        .intro-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .intro-screen h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-cyan);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+        }
+
+        .intro-screen p {
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: #a0c0d0;
+        }
+
+        .big-start-btn {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 18px 40px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+        }
+
+        .big-start-btn:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 25px var(--neon-cyan);
+        }
+
+        /* Statement Box Styling */
+        .statement-box {
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 4px solid var(--neon-pink);
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            font-size: 1.05rem;
+            color: #fff;
+            line-height: 1.5;
+        }
+
+        /* Cipher Image Styling */
+        .cipher-img-container {
+            margin-bottom: 20px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .cipher-img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+        }
+
+        /* Terminal Text Input Form */
+        .terminal-input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--neon-cyan);
+            padding: 14px 20px;
+            color: var(--neon-cyan);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .terminal-input:focus {
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .action-btn {
+            background: var(--neon-cyan);
+            color: #000;
+            border: none;
+            padding: 0 25px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+
+        .action-btn:hover {
+            background: #fff;
+            box-shadow: 0 0 15px #fff;
+        }
+
+        .error-msg {
+            color: var(--neon-pink);
+            margin-top: 15px;
+            font-size: 0.95rem;
+            min-height: 20px;
+            text-shadow: 0 0 5px rgba(255, 0, 127, 0.5);
+        }
+
+        /* Success Screen */
+        .success-screen {
+            text-align: center;
+            padding: 20px;
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-screen h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-shadow: 0 0 15px var(--neon-green);
+        }
+
+        .congrats-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--neon-yellow);
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(243, 230, 0, 0.4);
+        }
+
+        .success-screen p {
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .badge-box {
+            background: rgba(0, 255, 102, 0.1);
+            border: 1px solid var(--neon-green);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+            display: inline-block;
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.2);
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 0.85rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(3, 7, 18, 0.9);
+            color: #557;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="celebration-canvas"></canvas>
+    <div class="cyber-grid"></div>
+
+    <header>
+        <h1>CYBER BREAKOUT 2026</h1>
+        <div class="subtitle">George College of Management and Science</div>
+    </header>
+
+    <div class="container">
+        <!-- Progress Steps Tracker -->
+        <div class="progress-container" id="progress-tracker">
+            <div class="step-indicator active" id="indicator-1">1</div>
+            <div class="step-indicator" id="indicator-2">2</div>
+            <div class="step-indicator" id="indicator-3">3</div>
+        </div>
+
+        <div class="terminal-box">
+            
+            <!-- INTRO LANDING SCREEN -->
+            <div class="stage active" id="stage-intro">
+                <div class="intro-screen">
+                    <h2>SYSTEM FIREWALL READY</h2>
+                    <p>You are about to breach the secure server cluster. Complete all 3 successive phases to override the mainframe encryption keys.</p>
+                    <button class="big-start-btn" onclick="startBreakout()">Initialize Breakout</button>
+                </div>
+            </div>
+
+            <!-- STEP 1: Phishing Simulation & Employee Credentials -->
+            <div class="stage" id="stage-1">
+                <h3><span>[PHASE 01]</span> Phishing Simulation Analysis</h3>
+                <p class="instruction">Inspect the recovered workstation artifacts below to determine the employee's standard credential format:</p>
+                
+                <div class="statement-box">
+                    <strong>Recovered Deleted Email:</strong><br>
+                    "Urgent: Update your credentials using the standard format. <code style="color:var(--neon-cyan)">[Pet Name] + [Year Hired]</code>."
+                </div>
+
+                <div class="statement-box" style="border-left-color: var(--neon-cyan);">
+                    <strong>Workstation Evidence:</strong><br>
+                    • Family photo on desk featuring a golden retriever labeled <strong style="color:var(--neon-yellow)">"Max"</strong><br>
+                    • Employee ID badge showing hire year: <strong style="color:var(--neon-yellow)">2021</strong>
+                </div>
+
+                <div class="terminal-input-group">
+                    <input type="text" id="answer-1" class="terminal-input" placeholder="ENTER PASSWORD..." autocomplete="off">
+                    <button class="action-btn" onclick="submitStep(1)">Verify Phase 1</button>
+                </div>
+                <div class="error-msg" id="error-1"></div>
+            </div>
+
+            <!-- STEP 2: The Birthday Paradox -->
+            <div class="stage" id="stage-2">
+                <h3><span>[PHASE 02]</span> The Birthday Paradox</h3>
+                <p class="instruction">Analyze the IT manager's office clues to crack the calendar access code:</p>
+                
+                <div class="statement-box">
+                    <strong>Sticky Note on Monitor:</strong><br>
+                    "My password is my birth month (3-letter abbreviation capitalized) followed by my birth year."
+                </div>
+
+                <div class="statement-box" style="border-left-color: var(--neon-green);">
+                    <strong>Desk Clues:</strong><br>
+                    • Desk calendar is turned to <strong style="color:var(--neon-yellow)">July</strong><br>
+                    • Desk plaque inscription: <strong style="color:var(--neon-yellow)">"Happy 40th Birthday in 2026!"</strong>
+                </div>
+
+                <div class="terminal-input-group">
+                    <input type="text" id="answer-2" class="terminal-input" placeholder="ENTER PASSWORD (e.g. MonYYYY)..." autocomplete="off">
+                    <button class="action-btn" onclick="submitStep(2)">Verify Phase 2</button>
+                </div>
+                <div class="error-msg" id="error-2"></div>
+            </div>
+
+            <!-- STEP 3: The Secret Message (Caesar Cipher) -->
+            <div class="stage" id="stage-3">
+                <h3><span>[PHASE 03]</span> The Secret Message</h3>
+                <p class="instruction">Decrypt the physical note found beside the computer to secure final system access:</p>
+                
+                <!-- Caesar Cipher Wheel Image Added Here -->
+                <div class="cipher-img-container">
+                    <img src="./phase.png"
+     alt="Caesar Cipher Wheel Reference"
+     class="cipher-img"
+     onerror="this.alt='Image not found: check filename and extension'; console.error('Could not load phase.png');">
+                </div>
+
+                <div class="statement-box" style="border-left-color: var(--neon-pink);">
+                    <strong>Recovered Note:</strong><br>
+                    <code style="font-size: 1.5rem; color: var(--neon-cyan); letter-spacing: 3px;">ORFN</code><br><br>
+                    <em>"Move each letter 3 steps backward in the alphabet to find the original word."</em>
+                </div>
+
+                <div class="terminal-input-group">
+                    <input type="text" id="final-answer" class="terminal-input" placeholder="ENTER DECRYPTED WORD..." autocomplete="off">
+                    <button class="action-btn" onclick="submitStep(3)">Execute Breach</button>
+                </div>
+                <div class="error-msg" id="error-3"></div>
+            </div>
+
+            <!-- SUCCESS VICTORY SCREEN -->
+            <div class="stage" id="stage-success">
+                <div class="success-screen">
+                    <div class="congrats-title">CONGRATULATIONS! 🎉🥳✨</div>
+                    <h2>MAINFRAME BREACHED // SUCCESS!</h2>
+                    <div class="badge-box">
+                        <p style="color: var(--neon-green); font-size: 1.2rem; font-family: 'Orbitron', sans-serif; margin-bottom: 5px;">CYBER BREAKOUT 2026 COMPLETED 🏆</p>
+                        <p style="color: #fff; font-size: 0.95rem;">All three phases successfully cleared by your terminal! 🚀🔥</p>
+                    </div>
+                    <button class="action-btn" onclick="resetBreach()">Re-Initialize Terminal</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 George College of Management and Science | TechVerse Department of Computer Applications
+    </footer>
+
+    <script>
+        function startBreakout() {
+            document.getElementById('stage-intro').classList.remove('active');
+            document.getElementById('progress-tracker').classList.add('active');
+            document.getElementById('stage-1').classList.add('active');
+        }
+
+        function submitStep(step) {
+            if (step === 1) {
+                const val = document.getElementById('answer-1').value.trim();
+                if (val === "") {
+                    document.getElementById('error-1').innerText = "[ERROR] Input cannot be blank.";
+                    return;
+                }
+                if (val === "Max2021") {
+                    transitionToStep(2);
+                } else {
+                    document.getElementById('error-1').innerText = "[ACCESS DENIED] Incorrect password format. Check pet name and hire year.";
+                }
+            } 
+            else if (step === 2) {
+                const val = document.getElementById('answer-2').value.trim();
+                if (val === "") {
+                    document.getElementById('error-2').innerText = "[ERROR] Input cannot be blank.";
+                    return;
+                }
+                // Birth Year: 2026 - 40 = 1986. Month: Jul. Result: Jul1986
+                if (val === "Jul1986") {
+                    transitionToStep(3);
+                } else {
+                    document.getElementById('error-2').innerText = "[ACCESS DENIED] Incorrect birth code. Verify month and birth year calculation.";
+                }
+            } 
+            else if (step === 3) {
+                const val = document.getElementById('final-answer').value.trim().toUpperCase();
+                if (val === "") {
+                    document.getElementById('error-3').innerText = "[ERROR] Input cannot be blank.";
+                    return;
+                }
+                // ORFN shifted 3 backward -> LOCK
+                if (val === "LOCK") {
+                    triggerCheerAnimation();
+                    transitionToSuccess();
+                } else {
+                    document.getElementById('error-3').innerText = "[ACCESS DENIED] Incorrect word! Move each letter of ORFN 3 steps backward.";
+                }
+            }
+        }
+
+        function transitionToStep(nextStep) {
+            const currentInd = document.getElementById(`indicator-${nextStep - 1}`);
+            currentInd.classList.remove('active');
+            currentInd.classList.add('completed');
+            currentInd.innerText = "✓";
+
+            document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+            document.getElementById(`stage-${nextStep}`).classList.add('active');
+
+            const nextInd = document.getElementById(`indicator-${nextStep}`);
+            nextInd.classList.add('active');
+        }
+
+        function transitionToSuccess() {
+            const ind3 = document.getElementById('indicator-3');
+            ind3.classList.remove('active');
+            ind3.classList.add('completed');
+            ind3.innerText = "✓";
+
+            document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+            document.getElementById('stage-success').classList.add('active');
+        }
+
+        /* Neon Particle Cheer / Confetti Animation */
+        function triggerCheerAnimation() {
+            const canvas = document.getElementById('celebration-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            let particles = [];
+            const colors = ['#00f0ff', '#00ff66', '#ff007f', '#f3e600'];
+
+            for (let i = 0; i < 120; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 50,
+                    vx: (Math.random() - 0.5) * 16,
+                    vy: (Math.random() - 0.7) * 16 - 4,
+                    size: Math.random() * 6 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.015 + 0.01
+                });
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+
+                particles.forEach(p => {
+                    if (p.alpha > 0) {
+                        activeParticles++;
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.4; // gravity
+                        p.alpha -= p.decay;
+
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(p.alpha, 0);
+                        ctx.fillStyle = p.color;
+                        ctx.shadowBlur = 10;
+                        ctx.shadowColor = p.color;
+                        ctx.fillRect(p.x, p.y, p.size, p.size);
+                        ctx.restore();
+                    }
+                });
+
+                if (activeParticles > 0) {
+                    requestAnimationFrame(animateParticles);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            animateParticles();
+        }
+
+        function resetBreach() {
+            document.getElementById('answer-1').value = "";
+            document.getElementById('answer-2').value = "";
+            document.getElementById('final-answer').value = "";
+            
+            document.getElementById('progress-tracker').classList.remove('active');
+            for(let i=1; i<=3; i++) {
+                const ind = document.getElementById(`indicator-${i}`);
+                ind.className = "step-indicator";
+                ind.innerText = i;
+            }
+            document.getElementById('indicator-1').classList.add('active');
+
+            document.querySelectorAll('.error-msg').forEach(msg => msg.innerText = "");
+
+            document.querySelectorAll('.stage').forEach(el => el.classList.remove('active'));
+            document.getElementById('stage-intro').classList.add('active');
+        }
+    </script>
+</body>
+</html>
